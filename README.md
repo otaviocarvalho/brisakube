@@ -10,8 +10,8 @@ All resources in region **Nuremberg (nbg1)**.
 
 | Role | Count | Type | vCPU | RAM | Disk | Private IP |
 |------|-------|------|------|-----|------|------------|
-| Control plane | 1 | cpx11 | 2 | 2 GB | 40 GB | 10.255.0.101 |
-| Worker | 2 | cpx21 | 3 | 4 GB | 80 GB | 10.0.0.101–102 |
+| Control plane | 1 | cx23 | 2 | 4 GB | 40 GB | 10.255.0.101 |
+| Worker | 2 | cx33 | 4 | 8 GB | 80 GB | 10.0.0.101–102 |
 
 ### Networking
 
@@ -55,3 +55,13 @@ All resources in region **Nuremberg (nbg1)**.
    export KUBECONFIG=./k3s_kubeconfig.yaml
    kubectl get nodes
    ```
+
+## Scripts
+
+### `scripts/list_server_types.py`
+
+Lists all available Hetzner server types with specs and monthly prices, sorted by cost. Useful for choosing or comparing instance types.
+
+```bash
+HCLOUD_TOKEN=xxx python scripts/list_server_types.py
+```
