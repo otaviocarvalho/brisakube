@@ -60,7 +60,7 @@ All resources in region **Nuremberg (nbg1)**.
 
 ### `scripts/test_app.py`
 
-Deploys a test app (`test-app/manifests.yaml`) to the cluster, waits for it to be ready, hits it via the LB IP, and optionally cleans up.
+Deploys a test app (`test-app/manifests.yaml`) to the cluster with HTTPS via sslip.io + Let's Encrypt. Applies the `ClusterIssuer` from `cert-manager/`, waits for the certificate, tests HTTPS, and optionally cleans up.
 
 ```bash
 python scripts/test_app.py           # deploy, test, prompt for cleanup
@@ -69,6 +69,8 @@ python scripts/test_app.py --cleanup # remove test app resources
 ```
 
 Reads kubeconfig from `$KUBECONFIG` or `k3s_kubeconfig.yaml` in the repo root.
+
+The app will be reachable at `https://<LB-IP-dashes>.sslip.io` (e.g. `https://46-225-43-58.sslip.io`).
 
 ### `scripts/list_server_types.py`
 

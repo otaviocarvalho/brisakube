@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deploy a test app to the cluster and verify it's reachable via the LB IP.
+"""Deploy a test app to the cluster and verify it's reachable via HTTPS (sslip.io + Let's Encrypt).
 
 Usage:
     python scripts/test_app.py            # deploy, test, then prompt to cleanup
@@ -10,9 +10,9 @@ Requires KUBECONFIG to be set or k3s_kubeconfig.yaml to exist in the repo root.
 """
 
 import argparse
-import json
 import os
 import subprocess
+import ssl
 import sys
 import time
 import urllib.error
@@ -21,7 +21,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
 MANIFESTS = REPO_ROOT / "test-app" / "manifests.yaml"
-HOST_HEADER = "hello.test"
+CLUSTER_ISSUER = REPO_ROOT / "cert-manager" / "cluster-issuer.yaml"
 KUBECONFIG = os.environ.get("KUBECONFIG", str(REPO_ROOT / "k3s_kubeconfig.yaml"))
 
 
@@ -39,11 +39,20 @@ def get_lb_ip():
     out = kubectl("get", "svc", "-n", "nginx",
                   "nginx-ingress-nginx-controller",
                   "-o", "jsonpath={.status.loadBalancer.ingress[*].ip}")
-    ips = [ip for ip in out.split() if "." in ip]  # prefer IPv4
+    ips = [ip for ip in out.split() if "." in ip]
     if not ips:
         print("Error: could not find LB external IP")
         sys.exit(1)
     return ips[0]
+
+
+def sslip_domain(ip):
+    return ip.replace(".", "-") + ".sslip.io"
+
+
+def setup_cert_manager():
+    print("Applying ClusterIssuer...")
+    kubectl("apply", "-f", str(CLUSTER_ISSUER), capture=False)
 
 
 def deploy():
@@ -53,23 +62,33 @@ def deploy():
     kubectl("wait", "deployment/hello", "--for=condition=Available", "--timeout=120s", capture=False)
 
 
-def test(lb_ip):
-    url = f"http://{lb_ip}"
-    print(f"\nTesting: GET {url} (Host: {HOST_HEADER})")
-    req = urllib.request.Request(url, headers={"Host": HOST_HEADER})
-    for attempt in range(5):
+def wait_for_cert(domain, timeout=120):
+    print(f"Waiting for TLS certificate for {domain}...")
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        out = kubectl("get", "certificate", "hello-tls",
+                      "-o", "jsonpath={.status.conditions[?(@.type=='Ready')].status}")
+        if out == "True":
+            print("Certificate is ready.")
+            return True
+        time.sleep(5)
+    print("Warning: certificate not ready yet (may still be provisioning).")
+    return False
+
+
+def test_https(domain):
+    url = f"https://{domain}"
+    print(f"\nTesting: GET {url}")
+    for attempt in range(6):
         try:
-            with urllib.request.urlopen(req, timeout=10) as resp:
+            with urllib.request.urlopen(url, timeout=10) as resp:
                 body = resp.read().decode()
-                print(f"HTTP {resp.status} OK")
-                if "nginx" in body.lower() or len(body) > 0:
-                    print("Response looks good.")
-                else:
-                    print(f"Response body (first 200 chars): {body[:200]}")
+                print(f"HTTP {resp.status} OK — HTTPS is working.")
                 return True
         except urllib.error.URLError as e:
-            print(f"Attempt {attempt + 1}/5 failed: {e.reason} — retrying in 5s...")
-            time.sleep(5)
+            reason = getattr(e, "reason", str(e))
+            print(f"Attempt {attempt + 1}/6 failed: {reason} — retrying in 10s...")
+            time.sleep(10)
     print("All attempts failed.")
     return False
 
@@ -89,10 +108,18 @@ def main():
         cleanup()
         return
 
-    deploy()
     lb_ip = get_lb_ip()
+    domain = sslip_domain(lb_ip)
     print(f"LB IP: {lb_ip}")
-    success = test(lb_ip)
+    print(f"Domain: {domain}")
+
+    setup_cert_manager()
+    deploy()
+    wait_for_cert(domain)
+    success = test_https(domain)
+
+    if success:
+        print(f"\nOpen in browser: https://{domain}")
 
     if not args.keep:
         answer = input("\nClean up test resources? [Y/n] ").strip().lower()

@@ -33,10 +33,16 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: hello
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   ingressClassName: nginx
+  tls:
+  - hosts:
+    - 46-225-43-58.sslip.io
+    secretName: hello-tls
   rules:
-  - host: hello.test
+  - host: 46-225-43-58.sslip.io
     http:
       paths:
       - path: /
