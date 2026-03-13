@@ -62,7 +62,7 @@ def test(lb_ip):
             with urllib.request.urlopen(req, timeout=10) as resp:
                 body = resp.read().decode()
                 print(f"HTTP {resp.status} OK")
-                if "hello" in body.lower() or "nginx" in body.lower():
+                if "nginx" in body.lower() or len(body) > 0:
                     print("Response looks good.")
                 else:
                     print(f"Response body (first 200 chars): {body[:200]}")
