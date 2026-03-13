@@ -2,6 +2,11 @@ primary:
   persistence:
     storageClass: hcloud-volumes
     size: 10Gi
+  initdb:
+    scripts:
+      create_extensions.sh: |
+        #!/bin/bash
+        psql -U postgres -d chatwoot_production -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;"
 
 auth:
   database: chatwoot_production
