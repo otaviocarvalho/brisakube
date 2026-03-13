@@ -31,7 +31,7 @@ def run(cmd: list[str], check: bool = True, **kwargs) -> subprocess.CompletedPro
 SMTP_HOST = "smtp.resend.com"
 SMTP_PORT = "587"
 SMTP_USERNAME = "resend"
-MAILER_SENDER_EMAIL = "chatwoot@meliegturo.resend.app"
+MAILER_SENDER_EMAIL = "chatwoot@send.otavio.cat"
 
 REQUIRED_SECRETS = {
     "postgres_password":           lambda: secrets.token_urlsafe(32),
