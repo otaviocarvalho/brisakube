@@ -32,7 +32,17 @@ def load_or_generate_secrets() -> dict:
     if SECRETS_FILE.exists():
         with open(SECRETS_FILE) as f:
             data = json.load(f)
-        print("Loaded existing secrets from chatwoot/.secrets")
+        # Fill in any keys added after initial generation
+        updated = False
+        if "postgres_superuser_password" not in data:
+            data["postgres_superuser_password"] = secrets.token_urlsafe(32)
+            updated = True
+        if updated:
+            with open(SECRETS_FILE, "w") as f:
+                json.dump(data, f, indent=2)
+            print("Updated chatwoot/.secrets with new keys")
+        else:
+            print("Loaded existing secrets from chatwoot/.secrets")
     else:
         data = {
             "postgres_password": secrets.token_urlsafe(32),
