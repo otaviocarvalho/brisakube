@@ -28,33 +28,32 @@ def run(cmd: list[str], check: bool = True, **kwargs) -> subprocess.CompletedPro
     return subprocess.run(cmd, check=check, env=env, **kwargs)
 
 
+REQUIRED_SECRETS = {
+    "postgres_password":           lambda: secrets.token_urlsafe(32),
+    "postgres_superuser_password": lambda: secrets.token_urlsafe(32),
+    "redis_password":              lambda: secrets.token_urlsafe(32),
+    "secret_key_base":             lambda: secrets.token_hex(64),
+}
+
+
 def load_or_generate_secrets() -> dict:
+    data = {}
     if SECRETS_FILE.exists():
         with open(SECRETS_FILE) as f:
             data = json.load(f)
-        # Fill in any keys added after initial generation
-        updated = False
-        if "postgres_superuser_password" not in data:
-            data["postgres_superuser_password"] = secrets.token_urlsafe(32)
-            updated = True
-        if updated:
-            with open(SECRETS_FILE, "w") as f:
-                json.dump(data, f, indent=2)
-            print("Updated chatwoot/.secrets with new keys")
-        else:
-            print("Loaded existing secrets from chatwoot/.secrets")
-    else:
-        data = {
-            "postgres_password": secrets.token_urlsafe(32),
-            "postgres_superuser_password": secrets.token_urlsafe(32),
-            "redis_password": secrets.token_urlsafe(32),
-            "secret_key_base": secrets.token_hex(64),
-        }
+
+    missing = [k for k in REQUIRED_SECRETS if k not in data]
+    if missing:
+        for k in missing:
+            data[k] = REQUIRED_SECRETS[k]()
         SECRETS_FILE.parent.mkdir(parents=True, exist_ok=True)
         with open(SECRETS_FILE, "w") as f:
             json.dump(data, f, indent=2)
         os.chmod(SECRETS_FILE, 0o600)
-        print("Generated new secrets → chatwoot/.secrets")
+        action = "Generated" if len(missing) == len(REQUIRED_SECRETS) else "Updated"
+        print(f"{action} chatwoot/.secrets")
+    else:
+        print("Loaded existing secrets from chatwoot/.secrets")
     return data
 
 
