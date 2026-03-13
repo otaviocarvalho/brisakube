@@ -128,9 +128,9 @@ def install(s: dict):
 def uninstall():
     for release in [CHATWOOT_RELEASE, REDIS_RELEASE, POSTGRES_RELEASE]:
         run(["helm", "uninstall", release, "-n", NAMESPACE], check=False)
-    print("All releases uninstalled.")
-    print("PersistentVolumeClaims are NOT deleted automatically.")
-    print("Run: kubectl delete pvc --all -n default   (if you want a clean slate)")
+    run(["kubectl", "delete", "job", "-l", f"release={CHATWOOT_RELEASE}", "-n", NAMESPACE], check=False)
+    run(["kubectl", "delete", "pvc", "--all", "-n", NAMESPACE], check=False)
+    print("All releases, jobs, and PVCs deleted.")
 
 
 def main():
