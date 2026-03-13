@@ -2,6 +2,40 @@
 
 Kubernetes cluster on Hetzner Cloud using [kube-hetzner](https://github.com/kube-hetzner/terraform-hcloud-kube-hetzner).
 
+## Infrastructure
+
+All resources in region **Nuremberg (nbg1)**.
+
+### Nodes
+
+| Role | Count | Type | vCPU | RAM | Disk | Private IP |
+|------|-------|------|------|-----|------|------------|
+| Control plane | 1 | cpx11 | 2 | 2 GB | 40 GB | 10.255.0.101 |
+| Worker | 2 | cpx21 | 3 | 4 GB | 80 GB | 10.0.0.101–102 |
+
+### Networking
+
+- Private network: `10.0.0.0/8`
+  - Control plane subnet: `10.255.0.0/16`
+  - Agent subnet: `10.0.0.0/16`
+- Firewall: SSH (22), Kube API (6443), ICMP inbound; HTTP/S, DNS, NTP outbound
+
+### Load Balancer
+
+- Type: `lb11` (Hetzner), targets agent nodes only
+- Used for nginx ingress — public traffic hits the LB, which routes to worker nodes
+- LB private IP: `10.0.255.254`
+
+### k3s / Kubernetes
+
+- Module: [kube-hetzner](https://registry.terraform.io/modules/kube-hetzner/kube-hetzner/hcloud) v2.19.2
+- CNI: Flannel (default)
+- Ingress: nginx
+- Cloud controller: Hetzner CCM (manages LB and node IPs)
+- Storage: Hetzner CSI
+- OS: MicroOS (auto-updated, immutable)
+- Kubeconfig saved locally as `k3s_kubeconfig.yaml` after apply
+
 ## Setup
 
 1. Copy the example config and fill in your credentials:
@@ -16,8 +50,8 @@ Kubernetes cluster on Hetzner Cloud using [kube-hetzner](https://github.com/kube
    terraform apply
    ```
 
-## Cluster
-
-- 1 control plane node (`cpx11`, `nbg1`)
-- 2 worker nodes (`cpx21`, `nbg1`)
-- Ingress: nginx with Hetzner Load Balancer
+3. Use the cluster:
+   ```bash
+   export KUBECONFIG=./k3s_kubeconfig.yaml
+   kubectl get nodes
+   ```
