@@ -1,0 +1,13 @@
+# Terraform state and secrets
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+.terraform.lock.hcl
+*_kubeconfig.yaml
+
+# Working kube config (contains secrets)
+kube.tf
+
+# OS
+.DS_Store
