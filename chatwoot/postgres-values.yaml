@@ -4,9 +4,9 @@ primary:
     size: 10Gi
   initdb:
     scripts:
-      create_extensions.sh: |
+      grant_superuser.sh: |
         #!/bin/bash
-        psql -U postgres -d chatwoot_production -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;"
+        psql -U postgres -c "ALTER USER chatwoot SUPERUSER;"
 
 auth:
   database: chatwoot_production
