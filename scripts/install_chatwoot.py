@@ -28,11 +28,19 @@ def run(cmd: list[str], check: bool = True, **kwargs) -> subprocess.CompletedPro
     return subprocess.run(cmd, check=check, env=env, **kwargs)
 
 
+SMTP_HOST = "smtp.resend.com"
+SMTP_PORT = "587"
+SMTP_USERNAME = "resend"
+MAILER_SENDER_EMAIL = "chatwoot@meliegturo.resend.app"
+
 REQUIRED_SECRETS = {
     "postgres_password":           lambda: secrets.token_urlsafe(32),
     "postgres_superuser_password": lambda: secrets.token_urlsafe(32),
     "redis_password":              lambda: secrets.token_urlsafe(32),
     "secret_key_base":             lambda: secrets.token_hex(64),
+    "resend_api_key":              lambda: (_ for _ in ()).throw(RuntimeError(
+        "resend_api_key not set — add it manually to chatwoot/.secrets"
+    )),
 }
 
 
@@ -126,6 +134,13 @@ def install(s: dict):
         # is not substituted inside a Kubernetes Secret (only works in pod env[] entries).
         "--set", f"env.REDIS_URL={redis_url}",
         "--set", f"env.SECRET_KEY_BASE={s['secret_key_base']}",
+        "--set", f"env.SMTP_ADDRESS={SMTP_HOST}",
+        "--set", f"env.SMTP_PORT={SMTP_PORT}",
+        "--set", f"env.SMTP_USERNAME={SMTP_USERNAME}",
+        "--set", f"env.SMTP_PASSWORD={s['resend_api_key']}",
+        "--set", f"env.SMTP_AUTHENTICATION=plain",
+        "--set", f"env.SMTP_ENABLE_STARTTLS_AUTO=true",
+        "--set", f"env.MAILER_SENDER_EMAIL={MAILER_SENDER_EMAIL}",
     ])
 
     wait_for_deployment(f"{CHATWOOT_RELEASE}-web")
