@@ -141,6 +141,7 @@ def install(s: dict):
         "--set", f"env.SMTP_AUTHENTICATION=plain",
         "--set", f"env.SMTP_ENABLE_STARTTLS_AUTO=true",
         "--set", f"env.MAILER_SENDER_EMAIL={MAILER_SENDER_EMAIL}",
+        "--set", f"env.FRONTEND_URL=https://{HOSTNAME}",
     ])
 
     wait_for_deployment(f"{CHATWOOT_RELEASE}-web")
