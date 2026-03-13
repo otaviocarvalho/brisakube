@@ -58,6 +58,18 @@ All resources in region **Nuremberg (nbg1)**.
 
 ## Scripts
 
+### `scripts/test_app.py`
+
+Deploys a test app (`test-app/manifests.yaml`) to the cluster, waits for it to be ready, hits it via the LB IP, and optionally cleans up.
+
+```bash
+python scripts/test_app.py           # deploy, test, prompt for cleanup
+python scripts/test_app.py --keep    # deploy and test, leave resources
+python scripts/test_app.py --cleanup # remove test app resources
+```
+
+Reads kubeconfig from `$KUBECONFIG` or `k3s_kubeconfig.yaml` in the repo root.
+
 ### `scripts/list_server_types.py`
 
 Lists all available Hetzner server types with specs and monthly prices, sorted by cost. Useful for choosing or comparing instance types.
