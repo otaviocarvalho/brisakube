@@ -1,0 +1,11 @@
+master:
+  persistence:
+    storageClass: hcloud-volumes
+    size: 5Gi
+
+replica:
+  replicaCount: 0
+
+auth:
+  # password set via --set auth.password=... at install time
+  enabled: true

@@ -1,0 +1,9 @@
+primary:
+  persistence:
+    storageClass: hcloud-volumes
+    size: 10Gi
+
+auth:
+  database: chatwoot_production
+  username: chatwoot
+  # password set via --set auth.password=... at install time

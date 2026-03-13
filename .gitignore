@@ -9,5 +9,8 @@
 # Working kube config (contains secrets)
 kube.tf
 
+# Chatwoot generated secrets
+chatwoot/.secrets
+
 # OS
 .DS_Store

@@ -1,0 +1,17 @@
+ingress:
+  enabled: true
+  hostname: chat.46-225-43-58.sslip.io
+  tls: true
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  ingressClassName: nginx
+
+# Use external postgres and redis (deployed separately)
+postgresql:
+  enabled: false
+
+redis:
+  enabled: false
+
+# postgresql.url and redis.url set via --set at install time
+# rails.secretKeyBase set via --set at install time
