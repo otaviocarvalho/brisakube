@@ -6,7 +6,8 @@ primary:
     scripts:
       grant_superuser.sh: |
         #!/bin/bash
-        psql -U postgres -c "ALTER USER chatwoot SUPERUSER;"
+        PGPASSWORD=$(cat /opt/bitnami/postgresql/secrets/postgres-password) \
+          psql -U postgres -c "ALTER USER chatwoot SUPERUSER;"
 
 auth:
   database: chatwoot_production

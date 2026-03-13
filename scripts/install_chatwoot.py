@@ -36,6 +36,7 @@ def load_or_generate_secrets() -> dict:
     else:
         data = {
             "postgres_password": secrets.token_urlsafe(32),
+            "postgres_superuser_password": secrets.token_urlsafe(32),
             "redis_password": secrets.token_urlsafe(32),
             "secret_key_base": secrets.token_hex(64),
         }
@@ -80,6 +81,7 @@ def install(s: dict):
         "-n", NAMESPACE, "--create-namespace",
         "-f", str(REPO_ROOT / "chatwoot" / "postgres-values.yaml"),
         "--set", f"auth.password={s['postgres_password']}",
+        "--set", f"auth.postgresPassword={s['postgres_superuser_password']}",
     ])
 
     # --- Redis ---
