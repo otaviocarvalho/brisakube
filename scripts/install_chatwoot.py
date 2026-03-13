@@ -94,23 +94,27 @@ def install(s: dict):
     wait_for_statefulset(f"{POSTGRES_RELEASE}-postgresql")
     wait_for_statefulset(f"{REDIS_RELEASE}-master")
 
-    postgres_url = (
-        f"postgresql://chatwoot:{s['postgres_password']}"
-        f"@{POSTGRES_RELEASE}-postgresql.{NAMESPACE}.svc.cluster.local:5432/chatwoot_production"
-    )
-    redis_url = (
-        f"redis://:{s['redis_password']}"
-        f"@{REDIS_RELEASE}-master.{NAMESPACE}.svc.cluster.local:6379"
-    )
+    postgres_host = f"{POSTGRES_RELEASE}-postgresql.{NAMESPACE}.svc.cluster.local"
+    redis_host = f"{REDIS_RELEASE}-master.{NAMESPACE}.svc.cluster.local"
+    redis_url = f"redis://:{s['redis_password']}@{redis_host}:6379"
 
     # --- Chatwoot ---
     run([
         "helm", "upgrade", "--install", CHATWOOT_RELEASE, "chatwoot/chatwoot",
         "-n", NAMESPACE,
         "-f", str(REPO_ROOT / "chatwoot" / "chatwoot-values.yaml"),
-        "--set", f"postgresql.url={postgres_url}",
-        "--set", f"redis.url={redis_url}",
-        "--set", f"rails.secretKeyBase={s['secret_key_base']}",
+        "--set", f"postgresql.postgresqlHost={postgres_host}",
+        "--set", f"postgresql.postgresqlPort=5432",
+        "--set", f"postgresql.auth.username=chatwoot",
+        "--set", f"postgresql.auth.postgresPassword={s['postgres_password']}",
+        "--set", f"postgresql.auth.database=chatwoot_production",
+        "--set", f"redis.host={redis_host}",
+        "--set", f"redis.port=6379",
+        "--set", f"redis.password={s['redis_password']}",
+        # Override REDIS_URL explicitly: the chart template uses $(REDIS_PASSWORD) which
+        # is not substituted inside a Kubernetes Secret (only works in pod env[] entries).
+        "--set", f"env.REDIS_URL={redis_url}",
+        "--set", f"env.SECRET_KEY_BASE={s['secret_key_base']}",
     ])
 
     wait_for_deployment(f"{CHATWOOT_RELEASE}-web")
