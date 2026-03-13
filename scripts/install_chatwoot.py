@@ -89,8 +89,27 @@ def wait_for_statefulset(name: str, namespace: str = NAMESPACE, timeout: int = 3
     ])
 
 
+def patch_nginx_configmap():
+    """Allow headers with underscores (e.g. api_access_token) to pass through nginx."""
+    run([
+        "kubectl", "patch", "configmap", "nginx-ingress-nginx-controller",
+        "-n", "nginx", "--type", "merge",
+        "-p", '{"data":{"ignore-invalid-headers":"false"}}',
+    ])
+    run([
+        "kubectl", "rollout", "restart",
+        "deployment/nginx-ingress-nginx-controller", "-n", "nginx",
+    ])
+    run([
+        "kubectl", "rollout", "status",
+        "deployment/nginx-ingress-nginx-controller", "-n", "nginx",
+        "--timeout=120s",
+    ])
+
+
 def install(s: dict):
     setup_helm_repos()
+    patch_nginx_configmap()
 
     # --- PostgreSQL ---
     run([
