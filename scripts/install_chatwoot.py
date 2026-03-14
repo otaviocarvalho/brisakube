@@ -41,6 +41,15 @@ REQUIRED_SECRETS = {
     "resend_api_key":              lambda: (_ for _ in ()).throw(RuntimeError(
         "resend_api_key not set — add it manually to chatwoot/.secrets"
     )),
+    "fb_app_id":                   lambda: (_ for _ in ()).throw(RuntimeError(
+        "fb_app_id not set — add it manually to chatwoot/.secrets"
+    )),
+    "fb_app_secret":               lambda: (_ for _ in ()).throw(RuntimeError(
+        "fb_app_secret not set — add it manually to chatwoot/.secrets"
+    )),
+    "fb_verify_token":             lambda: (_ for _ in ()).throw(RuntimeError(
+        "fb_verify_token not set — add it manually to chatwoot/.secrets"
+    )),
 }
 
 
@@ -161,6 +170,9 @@ def install(s: dict):
         "--set", f"env.SMTP_ENABLE_STARTTLS_AUTO=true",
         "--set", f"env.MAILER_SENDER_EMAIL={MAILER_SENDER_EMAIL}",
         "--set", f"env.FRONTEND_URL=https://{HOSTNAME}",
+        "--set", f"env.FB_APP_ID={s['fb_app_id']}",
+        "--set", f"env.FB_APP_SECRET={s['fb_app_secret']}",
+        "--set", f"env.FB_VERIFY_TOKEN={s['fb_verify_token']}",
     ])
 
     wait_for_deployment(f"{CHATWOOT_RELEASE}-web")
